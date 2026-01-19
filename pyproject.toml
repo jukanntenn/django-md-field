@@ -40,6 +40,11 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["markdown_field"]
+include = [
+    "markdown_field/templates/**",
+    "markdown_field/static/**",
+    "markdown_field/locale/**"
+]
 
 [tool.pytest.ini_options]
 minversion = "8.0"

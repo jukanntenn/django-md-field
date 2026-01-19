@@ -1,0 +1,14 @@
+{% extends "blog/base.html" %}
+{% block title %}
+  {{ post.title }}
+{% endblock title %}
+{% block breadcrumb %}
+  <a href="{% url 'blog-index' %}">Home</a> / {{ post.title }}
+{% endblock breadcrumb %}
+{% block content %}
+  <article>
+    <h1>{{ post.title }}</h1>
+    <div>{{ post.author }} · {{ post.created_at | date:"Y-m-d H:i:s" }}</div>
+    <div>{{ post.body.html|safe }}</div>
+  </article>
+{% endblock content %}

@@ -6,6 +6,10 @@ from django.conf import settings
 from django.db.models.fields import TextField
 from django.db.models.query_utils import DeferredAttribute
 
+from .cache import register_field
+from .forms import MarkdownFormField
+from .widgets import PreviewMarkdownWidget
+
 
 class TOCHTMLParser(HTMLParser):
     def __init__(self, **kwargs):
@@ -99,6 +103,12 @@ class MarkdownField(TextField):
         self._extension_configs = kwargs.pop("extension_configs", None)
         super().__init__(*args, **kwargs)
 
+        markdown_kwargs = self.get_markdown_kwargs()
+        self._field_cache_key = register_field(
+            markdown_kwargs["extensions"],
+            markdown_kwargs["extension_configs"],
+        )
+
     def to_python(self, value):
         if isinstance(value, MarkdownText) or value is None:
             return value
@@ -113,17 +123,15 @@ class MarkdownField(TextField):
         return value
 
     def get_markdown_kwargs(self):
-        extensions = self._extensions
-        if extensions is None:
-            extensions = getattr(settings, "MARKDOWN_FIELD", {}).get("extensions", [])
-
-        extension_configs = self._extension_configs
-        if extension_configs is None:
-            extension_configs = getattr(settings, "MARKDOWN_FIELD", {}).get(
-                "extension_configs", {}
-            )
-
+        markdown_field_settings = getattr(settings, "MARKDOWN_FIELD", {})
         return {
-            "extensions": extensions,
-            "extension_configs": extension_configs,
+            "extensions": self._extensions
+            or markdown_field_settings.get("extensions", []),
+            "extension_configs": self._extension_configs
+            or markdown_field_settings.get("extension_configs", {}),
         }
+
+    def formfield(self, **kwargs):
+        kwargs.setdefault("form_class", MarkdownFormField)
+        kwargs.setdefault("widget", PreviewMarkdownWidget(field=self))
+        return super().formfield(**kwargs)
